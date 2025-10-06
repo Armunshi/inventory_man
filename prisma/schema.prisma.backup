@@ -1,0 +1,133 @@
+// =======================
+// Prisma Schema for Inventory Management
+// =======================
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+        
+// =======================
+// User Table (Suppliers, Retailers, Admins)
+// =======================
+enum Role {
+  ADMIN
+  SUPPLIER
+  RETAILER
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  contact   BigInt?
+  address   String? // optional for suppliers
+  createdAt DateTime @default(now())
+
+  // Relations
+  // Relations
+  accounts   Account[] // <— add this
+  sessions   Session[] // <— add this
+  products   Product[]   @relation("SupplierProducts")
+  orders     Order[]     @relation("RetailerOrders")
+  suppOrders SuppOrder[]
+}
+
+// =======================
+// Products Table
+// =======================
+model Product {
+  id              Int       @id @default(autoincrement()) 
+  name            String
+  category        String?
+  cost_price      Decimal?  @db.Decimal(10, 2)
+  selling_price   Decimal?  @db.Decimal(10, 2)
+  batches_present Int?
+  batch_size      Int?
+  min_stock       Int?
+  expiry          DateTime?
+
+  supplierId Int
+  supplier   User @relation("SupplierProducts", fields: [supplierId], references: [id])
+
+  // Relations
+  retailerOrders Order[]
+  suppOrders     SuppOrder[]
+}
+
+// =======================
+// Retailer Orders Table
+// =======================
+model Order {
+  id               Int       @id @default(autoincrement())
+  retailerId       Int
+  productId        Int
+  order_date       DateTime?
+  total_amount     Decimal?  @db.Decimal(10, 2)
+  order_status     String?
+  transaction_type String?
+  batches_bought   Int?
+
+  retailer User    @relation("RetailerOrders", fields: [retailerId], references: [id])
+  product  Product @relation(fields: [productId], references: [id])
+}
+
+// =======================
+// Supplier Orders Table
+// =======================
+model SuppOrder {
+  supplierId   Int
+  productId    Int
+  order_date   DateTime?
+  unit_price   Decimal?  @db.Decimal(10, 2)
+  order_status String?
+  batches_size Int?
+
+  supplier User    @relation(fields: [supplierId], references: [id])
+  product  Product @relation(fields: [productId], references: [id])
+
+  @@id([supplierId, productId]) // Composite Primary Key
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            Int
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       Int
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

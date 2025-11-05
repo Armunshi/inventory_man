@@ -36,14 +36,14 @@ export default function InventoryPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {
-          session.user?.role==='ADMIN'||session.user?.role==='WAREHOUSE_MANAGER'?(warehouses.map(({ id, managerId, ...safewarehouse }) => {
+          (warehouses.map(({ id, managerId, ...safewarehouse }) => {
             return (
               <WarehouseCard key={id}
                {...safewarehouse}
                onClick={()=>router.push(`/inventory/${id}`)}
                />
             )
-          })):
+          }))
           }
         </div>
         {/*Inventory table is here*/}

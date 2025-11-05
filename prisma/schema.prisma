@@ -9,61 +9,138 @@ datasource db {
 }
 
 model User {
-  id         Int         @id @default(autoincrement())
-  name       String
-  email      String      @unique
-  password   String
-  role       Role
-  contact    BigInt?
-  address    String?
-  createdAt  DateTime    @default(now())
-  accounts   Account[]
-  orders     Order[]     @relation("RetailerOrders")
-  products   Product[]   @relation("SupplierProducts")
-  sessions   Session[]
-  suppOrders SuppOrder[]
+  id                Int         @id @default(autoincrement())
+  name              String
+  email             String      @unique
+  password          String?
+  role              Role
+  contact           BigInt?
+  address           String?
+  createdAt         DateTime    @default(now())
+  accounts          Account[]
+  orders            Order[]     @relation("RetailerOrders")
+  products          Product[]   @relation("SupplierProducts")
+  sessions          Session[]
+  suppOrders        SuppOrder[]
+  managedWarehouses Warehouse[] @relation("WarehouseManager")
 }
 
 model Product {
   id              Int         @id @default(autoincrement())
   name            String
   category        String?
+  imageUrl        String?
+  description     String?
   cost_price      Decimal?    @db.Decimal(10, 2)
   selling_price   Decimal?    @db.Decimal(10, 2)
-  batches_present Int?
-  batch_size      Int?
-  min_stock       Int?
-  expiry          DateTime?
+  batch_size      Int?        // Units per batch
   supplierId      Int
-  retailerOrders  Order[]
-  supplier        User        @relation("SupplierProducts", fields: [supplierId], references: [id])
-  suppOrders      SuppOrder[]
+  available_stock Int @default(0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  supplier        User        @relation("SupplierProducts", fields: [supplierId], references: [id], onDelete: Cascade)
+  orders          OrderItem[]
+  suppOrders      SuppOrderItem[]
+  inventory       Inventory[]
+}
+
+model Warehouse {
+  id         Int         @id @default(autoincrement())
+  name       String
+  location   String
+  address    String?
+  capacity   Int?
+  managerId  Int?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  manager    User?       @relation("WarehouseManager", fields: [managerId], references: [id], onDelete: SetNull)
+  inventory  Inventory[]
+  orders     Order[]     @relation("WarehouseOrders")
+  suppOrders SuppOrder[] @relation("WarehouseSuppOrders")
+}
+
+model Inventory {
+  id          Int       @id @default(autoincrement())
+  warehouseId Int
+  productId   Int
+  quantity    Int       @default(0)
+  min_stock   Int       @default(0)
+  expiry      DateTime?
+  lastUpdated DateTime  @default(now()) @updatedAt
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([warehouseId, productId])
+  @@index([warehouseId])
+  @@index([productId])
 }
 
 model Order {
-  id               Int       @id @default(autoincrement())
+  id               Int          @id @default(autoincrement())
   retailerId       Int
-  productId        Int
-  order_date       DateTime?
-  total_amount     Decimal?  @db.Decimal(10, 2)
-  order_status     String?
+  warehouseId      Int?
+  order_date       DateTime     @default(now())
+  total_amount     Decimal?     @db.Decimal(10, 2)
+  order_status     String       @default("PENDING")
   transaction_type String?
-  batches_bought   Int?
-  product          Product   @relation(fields: [productId], references: [id])
-  retailer         User      @relation("RetailerOrders", fields: [retailerId], references: [id])
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  retailer         User         @relation("RetailerOrders", fields: [retailerId], references: [id], onDelete: Cascade)
+  warehouse        Warehouse?   @relation("WarehouseOrders", fields: [warehouseId], references: [id], onDelete: SetNull)
+  items            OrderItem[]  // 👈 many products in one order
+
+  @@index([retailerId])
+  @@index([warehouseId])
+  @@index([order_status])
+}
+model OrderItem {
+  id           Int       @id @default(autoincrement())
+  orderId      Int
+  productId    Int
+  quantity     Int       @default(1)
+  unit_price   Decimal?  @db.Decimal(10, 2)
+  batch_size   Int?
+
+  order        Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model SuppOrder {
+  id           Int             @id @default(autoincrement())
   supplierId   Int
-  productId    Int
-  order_date   DateTime?
-  unit_price   Decimal?  @db.Decimal(10, 2)
-  order_status String?
-  batches_size Int?
-  product      Product   @relation(fields: [productId], references: [id])
-  supplier     User      @relation(fields: [supplierId], references: [id])
+  warehouseId  Int?
+  order_date   DateTime        @default(now())
+  order_status String          @default("REQUESTED")
+  total_amount Decimal?        @db.Decimal(10, 2)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
-  @@id([supplierId, productId])
+  supplier     User            @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  warehouse    Warehouse?      @relation("WarehouseSuppOrders", fields: [warehouseId], references: [id], onDelete: SetNull)
+  items        SuppOrderItem[] // 👈 relation to order items
+
+  @@index([supplierId])
+  @@index([warehouseId])
+  @@index([order_status])
+}
+
+model SuppOrderItem {
+  id          Int       @id @default(autoincrement())
+  orderId     Int
+  productId   Int
+  unit_price  Decimal?  @db.Decimal(10, 2)
+  quantity    Int       @default(1)
+  batch_size  Int?
+  
+  order       SuppOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model Account {
@@ -102,6 +179,9 @@ model VerificationToken {
 
 enum Role {
   ADMIN
+  WAREHOUSE_MANAGER
   SUPPLIER
   RETAILER
 }
+
+

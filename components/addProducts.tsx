@@ -44,7 +44,7 @@ const AddProducts = ({ products, setProducts, id }: { products: ProductWithInven
             <Dialog>
                 <DialogTrigger asChild>
                     <Button variant="outline"
-                        className="bg-indigo-600 hover:bg-indigo-700">
+                        className="bg-blue-600 hover:bg-blue-700">
                         <Plus className="w-4 h-4 mr-2" />
                         Add
                     </Button>

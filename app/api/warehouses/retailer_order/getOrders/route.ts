@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import db from "@/prisma/prisma";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request) {
   try {
     const { searchParams } = new URL(_.url);
     const warehouseId = parseInt(searchParams.get("warehouseId") || "0");

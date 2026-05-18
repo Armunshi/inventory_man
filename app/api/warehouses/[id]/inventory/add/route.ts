@@ -1,15 +1,12 @@
 import db from "@/prisma/prisma";
-import { Product } from "@prisma/client";
-import { NextApiRequest } from "next";
-import { Params } from "next/dist/server/request/params";
 import { NextRequest, NextResponse } from "next/server";
 
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: Params }): Promise<NextResponse> {
+    { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
     try {
-        const warehouseidParam = params.id
+        const { id: warehouseidParam } = await params;
 
 
 
@@ -82,10 +79,10 @@ export async function POST(
             },
             { status: 201 }
         );
-    } catch (error: any) {
+    } catch (error) {
         console.error("Error creating product/inventory:", error);
         return NextResponse.json(
-            { error: error.message || "Internal Server Error" },
+            { error: error instanceof Error ? error.message : "Internal Server Error" },
             { status: 500 }
         );
     }

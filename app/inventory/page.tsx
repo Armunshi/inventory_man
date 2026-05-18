@@ -29,7 +29,7 @@ export default function InventoryPage() {
 
   return (
     <LayoutWithSidebar>
-      <main className="flex-1 p-6 overflow-auto">
+      <main className="flex-1 p-4 overflow-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Inventory</h2>
           <AddWarehouse warehouses={warehouses} loading={loading} setWarehouses={setWarehouses}/>

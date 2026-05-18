@@ -25,6 +25,7 @@ import { useSession, signOut } from "next-auth/react";
 import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import HomePage from "./HomePage/page";
 
 interface LayoutWithSidebarProps {
   children: ReactNode;
@@ -42,7 +43,7 @@ export default function LayoutWithSidebar({ children }: LayoutWithSidebarProps) 
   
   if (!session) return (
     <div className="flex items-center justify-center min-h-screen">
-      <p>Not logged in</p>
+      <HomePage/>
     </div>
   );
 
@@ -50,7 +51,6 @@ export default function LayoutWithSidebar({ children }: LayoutWithSidebarProps) 
     { href: "/", icon: BarChart3, label: "Dashboard" },
     { href: "/products", icon: Package, label: "Products" },
     { href: "/inventory", icon: Store, label: "Inventory" },
-    { href: "/stock-levels", icon: TrendingUp, label: "Stock Levels" },
     { href: "/orders", icon: ShoppingCart, label: "Orders" },
     { href: "/reports", icon: BarChart3, label: "Reports" },
   ];
@@ -61,7 +61,7 @@ export default function LayoutWithSidebar({ children }: LayoutWithSidebarProps) 
       <aside className="hidden lg:flex w-64 bg-white border-r flex-col">
         <div className="p-6 border-b">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-blue-800 rounded-md flex items-center justify-center">
               <span className="text-white font-bold">I</span>
             </div>
             <span className="font-semibold text-lg">Inventora</span>
@@ -78,9 +78,9 @@ export default function LayoutWithSidebar({ children }: LayoutWithSidebarProps) 
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-md ${
                     isActive
-                      ? "bg-indigo-50 text-indigo-600"
+                      ? "bg-blue-50 text-blue-800"
                       : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
@@ -95,7 +95,7 @@ export default function LayoutWithSidebar({ children }: LayoutWithSidebarProps) 
         <div className="p-4 border-t">
           <button 
             onClick={() => signOut()} 
-            className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+            className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
           >
             Logout
           </button>
@@ -112,7 +112,7 @@ export default function LayoutWithSidebar({ children }: LayoutWithSidebarProps) 
   <SheetContent side="left" className="w-64 p-0">
     <div className="p-6 border-b">
       <SheetTitle className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+        <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center">
           <span className="text-white font-bold">I</span>
         </div>
         <span className="font-semibold text-lg">Inventora</span>
@@ -129,9 +129,9 @@ export default function LayoutWithSidebar({ children }: LayoutWithSidebarProps) 
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-md ${
                 isActive
-                  ? "bg-indigo-50 text-indigo-600"
+                  ? "bg-blue-50 text-blue-600"
                   : "text-gray-600"
               }`}
             >
@@ -156,20 +156,20 @@ export default function LayoutWithSidebar({ children }: LayoutWithSidebarProps) 
                 <input
                   type="text"
                   placeholder="Search here..."
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
             
             <div className="flex items-center gap-4">
-              <button className="p-2 hover:bg-gray-100 rounded-lg relative">
+              <button className="p-2 hover:bg-gray-100 rounded-md relative">
                 <Bell className="w-5 h-5 text-gray-600" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
-              <button className="p-2 hover:bg-gray-100 rounded-lg">
+              <button className="p-2 hover:bg-gray-100 rounded-md">
                 <Mail className="w-5 h-5 text-gray-600" />
               </button>
-              <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
                 <span className="text-white font-medium">
                   {session.user?.name?.charAt(0) || session.user?.email?.charAt(0) || 'U'}
                 </span>

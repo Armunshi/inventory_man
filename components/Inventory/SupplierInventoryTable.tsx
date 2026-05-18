@@ -30,7 +30,7 @@ type ProductWithInventory = Product & {
     expiry: Date | null;
 };
 
-const Inventorytable = ({ products, page }: { products: ProductWithInventory[], page: Number }) => {
+const Inventorytable = ({ products, page }: { products: ProductWithInventory[], page: number }) => {
     const { data: session } = useSession();
     const userRole = session?.user?.role;
     console.log(products)
@@ -272,12 +272,12 @@ const Inventorytable = ({ products, page }: { products: ProductWithInventory[], 
             {(stockStats.criticalCount > 0 || stockStats.lowCount > 0) && (
                 <div className="mb-4 space-y-2">
                     {stockStats.criticalCount > 0 && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-800">
+                        <div className="bg-red-50 border border-red-200 rounded-md p-3 text-red-800">
                             ⚠️ {stockStats.criticalCount} product(s) below minimum stock
                         </div>
                     )}
                     {stockStats.lowCount > 0 && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-yellow-800">
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-yellow-800">
                             ⚡ {stockStats.lowCount} product(s) running low on stock
                         </div>
                     )}

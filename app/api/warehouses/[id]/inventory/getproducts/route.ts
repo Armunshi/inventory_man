@@ -1,8 +1,6 @@
 import db from "@/prisma/prisma";
 import { Product } from "@prisma/client";
-import { Params } from "next/dist/server/request/params";
 import { NextRequest, NextResponse } from "next/server";
-import { number } from "zod";
 
 type ProductWithInventory = Product & {
   min_stock: number;
@@ -11,8 +9,8 @@ type ProductWithInventory = Product & {
 };
 
 
-export async function GET(request: NextRequest, { params }: { params: Params }): Promise<Response> {
-    const warehouseidParam = params.id
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+    const { id: warehouseidParam } = await params;
     if (!warehouseidParam) {
         throw new Error("Warehouse ID not provided");
     }

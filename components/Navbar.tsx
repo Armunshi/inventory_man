@@ -17,23 +17,20 @@ import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuL
 
 export function Navbar() {
     return (
-        <>
+        <div className="w-screen h-10 to-blue-400 flex flex-row  ">
+            <NavigationMenu className="flex flex-row gap-4 items-center">
+                <NavigationMenuList className="flex flex-row gap-2">
+                    <div className="w-screen h-10 bg-purple-200 flex items-center justify-between px-4">
+                        <div className="font-bold">Inventora</div>
 
-
-            <div className="w-screen h-10 flex flex-row items-center border justify-between px-4">
-                <div className="font-bold">Inventora</div>
-                <NavigationMenu className="flex flex-row gap-4 items-center">
-                    <NavigationMenuList className="flex flex-row gap-2">
-                        <NavigationMenuItem>
+                        <div className="flex gap-4">
                             <NavigationMenuLink href="/sign-in">Login</NavigationMenuLink>
-                        </NavigationMenuItem>
-                        <NavigationMenuItem>
                             <NavigationMenuLink href="/sign-up">SignUp</NavigationMenuLink>
-                        </NavigationMenuItem>
-                    </NavigationMenuList>
-                </NavigationMenu>
-            </div>
+                        </div>
+                    </div>
 
-        </>
+                </NavigationMenuList>
+            </NavigationMenu>
+        </div>
     )
 }

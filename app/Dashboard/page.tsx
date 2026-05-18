@@ -49,7 +49,7 @@ const Dashboard = () => {
     month: 'long',
     day: 'numeric'
   });
-  const [day,setDay] = useState<String>(fullDate)
+  const [day,setDay] = useState<string>(fullDate)
 
 
   if (status === "loading") {
@@ -63,7 +63,7 @@ const Dashboard = () => {
   return (
     <>
       {/* Dashboard Content */}
-      <main className="flex-1 p-6 overflow-auto">
+      <main className="flex-1 p-4 overflow-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Welcome Back, {session.user?.name || 'User'}</h1>
           <h2 className='text-xl  text-gray-900'>{session.user?.role}</h2>
@@ -73,7 +73,7 @@ const Dashboard = () => {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Dashboard</h2>
           <div className="flex gap-2">
-            <Button className="bg-indigo-600 hover:bg-indigo-700">
+            <Button className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 mr-2" />
               Add New
             </Button>
@@ -100,7 +100,7 @@ const Dashboard = () => {
               </span>
             </div>
             <p className="text-gray-500 text-xs">Sales in last month</p>
-            <button className="text-indigo-600 text-xs mt-2 flex items-center gap-1">
+            <button className="text-blue-600 text-xs mt-2 flex items-center gap-1">
               View all <ArrowUpRight className="w-3 h-3" />
             </button>
           </div>
@@ -121,7 +121,7 @@ const Dashboard = () => {
               </span>
             </div>
             <p className="text-gray-500 text-xs">Return return in last month</p>
-            <button className="text-indigo-600 text-xs mt-2 flex items-center gap-1">
+            <button className="text-blue-600 text-xs mt-2 flex items-center gap-1">
               View all <ArrowUpRight className="w-3 h-3" />
             </button>
           </div>
@@ -142,7 +142,7 @@ const Dashboard = () => {
               </span>
             </div>
             <p className="text-gray-500 text-xs">Purchase in last month</p>
-            <button className="text-indigo-600 text-xs mt-2 flex items-center gap-1">
+            <button className="text-blue-600 text-xs mt-2 flex items-center gap-1">
               View all <ArrowUpRight className="w-3 h-3" />
             </button>
           </div>
@@ -163,7 +163,7 @@ const Dashboard = () => {
               </span>
             </div>
             <p className="text-gray-500 text-xs">Purchase return in last month</p>
-            <button className="text-indigo-600 text-xs mt-2 flex items-center gap-1">
+            <button className="text-blue-600 text-xs mt-2 flex items-center gap-1">
               View all <ArrowUpRight className="w-3 h-3" />
             </button>
           </div>
@@ -198,21 +198,21 @@ const Dashboard = () => {
           <div className="bg-white rounded-xl p-6 border">
             <h3 className="text-lg font-semibold mb-6">Overall Information</h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-900 text-white rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-gray-900 text-white rounded-md">
                 <div>
                   <p className="text-2xl font-bold">6987</p>
                   <p className="text-xs text-gray-300">Invoices</p>
                 </div>
                 <TrendingUp className="w-5 h-5" />
               </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-md">
                 <div>
                   <p className="text-2xl font-bold">4896</p>
                   <p className="text-xs text-gray-500">Sales</p>
                 </div>
                 <TrendingUp className="w-5 h-5 text-gray-400" />
               </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-md">
                 <div>
                   <p className="text-2xl font-bold">567</p>
                   <p className="text-xs text-gray-500">Orders</p>
@@ -284,9 +284,9 @@ const Dashboard = () => {
               </select>
             </div>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-lg"></div>
+                  <div className="w-10 h-10 bg-blue-100 rounded-md"></div>
                   <div>
                     <p className="font-medium">Product Name</p>
                     <p className="text-xs text-gray-500">Category</p>
@@ -297,9 +297,9 @@ const Dashboard = () => {
                   <p className="text-xs text-gray-500">245 sold</p>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg"></div>
+                  <div className="w-10 h-10 bg-purple-100 rounded-md"></div>
                   <div>
                     <p className="font-medium">Product Name</p>
                     <p className="text-xs text-gray-500">Category</p>

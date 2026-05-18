@@ -26,14 +26,14 @@ const WarehouseCard = ({
     
     return (
         <Card 
-            className="hover:shadow-lg transition-all cursor-pointer border-2 hover:border-indigo-400"
+            className="hover:shadow-lg transition-all cursor-pointer border-2 hover:border-blue-400"
             onClick={onClick}
         >
             <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-indigo-100 rounded-lg">
-                            <Building2 className="w-6 h-6 text-indigo-600" />
+                        <div className="p-3 bg-blue-100 rounded-md">
+                            <Building2 className="w-6 h-6 text-blue-600" />
                         </div>
                         <div>
                             <CardTitle className="text-lg font-semibold text-gray-900">
@@ -60,7 +60,7 @@ const WarehouseCard = ({
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="bg-gray-50 rounded-md p-3">
                         <div className="flex items-center gap-2 mb-1">
                             <Package className="w-4 h-4 text-gray-500" />
                             <span className="text-xs text-gray-500 uppercase font-medium">Products</span>
@@ -71,12 +71,12 @@ const WarehouseCard = ({
                         )}
                     </div>
                     
-                    <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="bg-gray-50 rounded-md p-3">
                         <div className="flex items-center gap-2 mb-1">
                             <TrendingUp className="w-4 h-4 text-gray-500" />
                             <span className="text-xs text-gray-500 uppercase font-medium">Usage</span>
                         </div>
-                        <p className="text-2xl font-bold text-indigo-600">{utilisationPercentage}%</p>
+                        <p className="text-2xl font-bold text-blue-600">{utilisationPercentage}%</p>
                         <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                             <div 
                                 className={`h-2 rounded-full transition-all ${
@@ -93,7 +93,7 @@ const WarehouseCard = ({
                 {/* Alerts Section */}
                 <div className="space-y-2 pt-2">
                     {criticalCount > 0 && (
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200">
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-red-50 text-red-700 border border-red-200">
                             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                             <span className="text-sm font-medium">
                                 {criticalCount} Critical Stock Alert{criticalCount > 1 ? 's' : ''}
@@ -102,7 +102,7 @@ const WarehouseCard = ({
                     )}
                     
                     {criticalCount === 0 && lowStockCount > 0 && (
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-yellow-50 text-yellow-700 border border-yellow-200">
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-50 text-yellow-700 border border-yellow-200">
                             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                             <span className="text-sm font-medium">
                                 {lowStockCount} Low Stock Warning{lowStockCount > 1 ? 's' : ''}
@@ -111,7 +111,7 @@ const WarehouseCard = ({
                     )}
                     
                     {criticalCount === 0 && lowStockCount === 0 && (
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 text-green-700 border border-green-200">
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-green-50 text-green-700 border border-green-200">
                             <span className="text-sm font-medium">✓ All Stock Levels Healthy</span>
                         </div>
                     )}

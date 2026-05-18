@@ -7,6 +7,7 @@ import { compare } from "bcrypt";
 import db from "../prisma/prisma";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { DefaultSession } from "next-auth";
+import type { AdapterUser } from "@auth/core/adapters";
 
 declare module "next-auth" {
   interface User {
@@ -28,9 +29,36 @@ declare module "@auth/core/jwt" {
   }
 }
 
+// You do not have to change your default schema unless you want to support email verification or user images.
+// NextAuth's PrismaAdapter expects fields like emailVerified and image because the default schema includes them.
+// If your schema does not have these fields, you can safely omit them from the returned object as you did.
+// However, you may see TypeScript warnings or errors because of type mismatches.
+// To resolve this, you can cast the returned object to the expected AdapterUser type, or extend your schema to include those fields as nullable if you want full compatibility.
 
+const adapter = PrismaAdapter(db);
 
-  
+adapter.createUser = async (data) => {
+  // Remove id if present
+  const { id } = data;
+
+  // Create user with default role
+  const user = await db.user.create({
+    data: {
+      name: data.name ?? data.email ?? "User",
+      email: data.email,
+      role: "RETAILER", // or your default
+    },
+  });
+
+  // Return AdapterUser shape, omitting fields not in your schema
+  return {
+    id: user.id.toString(), // NextAuth expects string id
+    name: user.name,
+    email: user.email,
+    emailVerified: null, // explicitly set to null if not in schema
+    image: null,         // explicitly set to null if not in schema
+  } as AdapterUser;
+};
 
 export  const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
@@ -53,7 +81,7 @@ export  const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!user) return null;
 
-        const isPasswordValid = await compare(credentials.password, user.password);
+        const isPasswordValid = await compare(credentials.password, (user.password)!);
         if (!isPasswordValid) return null;
 
         return {

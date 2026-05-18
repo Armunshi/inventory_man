@@ -10,6 +10,7 @@ datasource db {
 
 model User {
   id                Int         @id @default(autoincrement())
+  businessId        Int?
   name              String
   email             String      @unique
   password          String?
@@ -22,30 +23,38 @@ model User {
   products          Product[]   @relation("SupplierProducts")
   sessions          Session[]
   suppOrders        SuppOrder[]
+  business          Business?   @relation(fields: [businessId], references: [id], onDelete: SetNull)
   managedWarehouses Warehouse[] @relation("WarehouseManager")
+
+  @@index([businessId])
 }
 
 model Product {
-  id              Int         @id @default(autoincrement())
+  id              Int             @id @default(autoincrement())
+  businessId      Int?
   name            String
   category        String?
   imageUrl        String?
   description     String?
-  cost_price      Decimal?    @db.Decimal(10, 2)
-  selling_price   Decimal?    @db.Decimal(10, 2)
-  batch_size      Int?        // Units per batch
+  cost_price      Decimal?        @db.Decimal(10, 2)
+  selling_price   Decimal?        @db.Decimal(10, 2)
+  batch_size      Int? // Units per batch
   supplierId      Int
-  available_stock Int @default(0)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  supplier        User        @relation("SupplierProducts", fields: [supplierId], references: [id], onDelete: Cascade)
+  available_stock Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  business        Business?       @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  supplier        User            @relation("SupplierProducts", fields: [supplierId], references: [id], onDelete: Cascade)
   orders          OrderItem[]
   suppOrders      SuppOrderItem[]
   inventory       Inventory[]
+
+  @@index([businessId])
 }
 
 model Warehouse {
   id         Int         @id @default(autoincrement())
+  businessId Int?
   name       String
   location   String
   address    String?
@@ -53,10 +62,13 @@ model Warehouse {
   managerId  Int?
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+  business   Business?   @relation(fields: [businessId], references: [id], onDelete: SetNull)
   manager    User?       @relation("WarehouseManager", fields: [managerId], references: [id], onDelete: SetNull)
   inventory  Inventory[]
   orders     Order[]     @relation("WarehouseOrders")
   suppOrders SuppOrder[] @relation("WarehouseSuppOrders")
+
+  @@index([businessId])
 }
 
 model Inventory {
@@ -76,68 +88,81 @@ model Inventory {
 }
 
 model Order {
-  id               Int          @id @default(autoincrement())
+  id               Int      @id @default(autoincrement())
   retailerId       Int
   warehouseId      Int?
-  order_date       DateTime     @default(now())
-  total_amount     Decimal?     @db.Decimal(10, 2)
-  order_status     String       @default("PENDING")
+  order_date       DateTime @default(now())
+  total_amount     Decimal? @db.Decimal(10, 2)
+  order_status     String   @default("PENDING")
   transaction_type String?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  retailer         User         @relation("RetailerOrders", fields: [retailerId], references: [id], onDelete: Cascade)
-  warehouse        Warehouse?   @relation("WarehouseOrders", fields: [warehouseId], references: [id], onDelete: SetNull)
-  items            OrderItem[]  // 👈 many products in one order
+  retailer  User        @relation("RetailerOrders", fields: [retailerId], references: [id], onDelete: Cascade)
+  warehouse Warehouse?  @relation("WarehouseOrders", fields: [warehouseId], references: [id], onDelete: SetNull)
+  items     OrderItem[] // 👈 many products in one order
 
   @@index([retailerId])
   @@index([warehouseId])
   @@index([order_status])
 }
-model OrderItem {
-  id           Int       @id @default(autoincrement())
-  orderId      Int
-  productId    Int
-  quantity     Int       @default(1)
-  unit_price   Decimal?  @db.Decimal(10, 2)
-  batch_size   Int?
 
-  order        Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product      Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+model OrderItem {
+  id         Int      @id @default(autoincrement())
+  orderId    Int
+  productId  Int
+  quantity   Int      @default(1)
+  unit_price Decimal? @db.Decimal(10, 2)
+  batch_size Int?
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
 
   @@index([orderId])
   @@index([productId])
 }
 
 model SuppOrder {
-  id           Int             @id @default(autoincrement())
-  supplierId   Int
-  warehouseId  Int?
-  order_date   DateTime        @default(now())
-  order_status String          @default("REQUESTED")
-  total_amount Decimal?        @db.Decimal(10, 2)
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  id                 Int                  @id @default(autoincrement())
+  businessId         Int?
+  supplierId         Int
+  warehouseId        Int?
+  workflowTemplateId Int?
+  currentStageId     Int?
+  order_date         DateTime             @default(now())
+  order_status       String               @default("REQUESTED")
+  lifecycleStatus    OrderLifecycleStatus @default(OPEN)
+  total_amount       Decimal?             @db.Decimal(10, 2)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 
-  supplier     User            @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  warehouse    Warehouse?      @relation("WarehouseSuppOrders", fields: [warehouseId], references: [id], onDelete: SetNull)
-  items        SuppOrderItem[] // 👈 relation to order items
+  business          Business?                @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  supplier          User                     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  warehouse         Warehouse?               @relation("WarehouseSuppOrders", fields: [warehouseId], references: [id], onDelete: SetNull)
+  workflowTemplate  WorkflowTemplate?        @relation(fields: [workflowTemplateId], references: [id], onDelete: SetNull)
+  currentStage      WorkflowStage?           @relation("CurrentSupplierOrderStage", fields: [currentStageId], references: [id], onDelete: SetNull)
+  items             SuppOrderItem[]
+  stageProgress     SuppOrderStageProgress[]
+  customFieldValues SuppOrderFieldValue[]
 
+  @@index([businessId])
   @@index([supplierId])
   @@index([warehouseId])
   @@index([order_status])
+  @@index([workflowTemplateId])
+  @@index([currentStageId])
 }
 
 model SuppOrderItem {
-  id          Int       @id @default(autoincrement())
-  orderId     Int
-  productId   Int
-  unit_price  Decimal?  @db.Decimal(10, 2)
-  quantity    Int       @default(1)
-  batch_size  Int?
-  
-  order       SuppOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product     Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+  id         Int      @id @default(autoincrement())
+  orderId    Int
+  productId  Int
+  unit_price Decimal? @db.Decimal(10, 2)
+  quantity   Int      @default(1)
+  batch_size Int?
+
+  order   SuppOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
 
   @@index([orderId])
   @@index([productId])
@@ -177,6 +202,112 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model Business {
+  id                    Int                    @id @default(autoincrement())
+  name                  String
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  users                 User[]
+  products              Product[]
+  warehouses            Warehouse[]
+  suppOrders            SuppOrder[]
+  workflowTemplates     WorkflowTemplate[]
+  orderFieldDefinitions OrderFieldDefinition[]
+}
+
+model WorkflowTemplate {
+  id         Int               @id @default(autoincrement())
+  businessId Int
+  name       String
+  orderType  WorkflowOrderType @default(SUPPLIER_ORDER)
+  isDefault  Boolean           @default(false)
+  isActive   Boolean           @default(true)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  business         Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  stages           WorkflowStage[]
+  fieldDefinitions OrderFieldDefinition[]
+  suppOrders       SuppOrder[]
+
+  @@index([businessId])
+  @@index([orderType])
+}
+
+model WorkflowStage {
+  id         Int      @id @default(autoincrement())
+  templateId Int
+  name       String
+  position   Int
+  isRequired Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  template             WorkflowTemplate         @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  progress             SuppOrderStageProgress[]
+  currentForSuppOrders SuppOrder[]              @relation("CurrentSupplierOrderStage")
+
+  @@unique([templateId, position])
+  @@index([templateId])
+}
+
+model SuppOrderStageProgress {
+  id          Int         @id @default(autoincrement())
+  orderId     Int
+  stageId     Int
+  status      StageStatus @default(PENDING)
+  startedAt   DateTime?
+  completedAt DateTime?
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  order SuppOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  stage WorkflowStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, stageId])
+  @@index([orderId])
+  @@index([stageId])
+  @@index([status])
+}
+
+model OrderFieldDefinition {
+  id         Int             @id @default(autoincrement())
+  businessId Int
+  templateId Int?
+  name       String
+  key        String
+  type       CustomFieldType
+  required   Boolean         @default(false)
+  options    Json?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  business Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  template WorkflowTemplate?     @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  values   SuppOrderFieldValue[]
+
+  @@unique([businessId, key])
+  @@index([businessId])
+  @@index([templateId])
+}
+
+model SuppOrderFieldValue {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  fieldId   Int
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order SuppOrder            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  field OrderFieldDefinition @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, fieldId])
+  @@index([orderId])
+  @@index([fieldId])
+}
+
 enum Role {
   ADMIN
   WAREHOUSE_MANAGER
@@ -184,4 +315,29 @@ enum Role {
   RETAILER
 }
 
+enum WorkflowOrderType {
+  SUPPLIER_ORDER
+  RETAILER_ORDER
+}
 
+enum StageStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  SKIPPED
+  BLOCKED
+}
+
+enum OrderLifecycleStatus {
+  OPEN
+  COMPLETED
+  CANCELLED
+}
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  DATE
+  BOOLEAN
+  SELECT
+}

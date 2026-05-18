@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import LayoutWithSidebar from "@/app/layotuwithsidebar";
 import AddProducts from "@/components/addProducts";
 import { useSession } from "next-auth/react";
+import { getWarehouseProducts } from "@/warehouseService";
 
 
 type ProductWithInventory = Product & {
@@ -17,7 +18,7 @@ type ProductWithInventory = Product & {
 export default function WarehouseInventoryPage() {
   const { id } = useParams();
   const [products, setProducts] = useState<ProductWithInventory[]>([]);
-  const [page, setPage] = useState<Number>(1);
+  const [page, setPage] = useState<number>(1);
   const [loading,setLoading] = useState<boolean>(true);
   const {data:session,status} = useSession();
  
@@ -39,15 +40,10 @@ export default function WarehouseInventoryPage() {
 
         const url = `/api/warehouses/${id}/inventory/getproducts?${params.toString()}`; 
         try {
-            const response = await fetch(url,{
-                method:"GET",
-                headers:{'Content-type':"application/json"},
-            })   
-            if (response.ok){
-                const data = await response.json();
+              const data = await getWarehouseProducts(id as string,session.user.id,session.user.role || "ADMIN");//resolve later
                
-                setProducts(data);
-            }
+              setProducts(data);
+
         } catch (err) {
             console.log("Error While fetching Products",err)
         }finally{
@@ -59,7 +55,7 @@ export default function WarehouseInventoryPage() {
   ,[session?.user?.id, session?.user?.role])
   return (
     <LayoutWithSidebar>
-      <main className="flex-1 p-6 overflow-auto">
+      <main className="flex-1 p-4 overflow-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Inventory</h2>
           <AddProducts id={id} setProducts={setProducts} products={products}/>

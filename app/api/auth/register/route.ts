@@ -19,7 +19,9 @@ export async function POST(request: Request): Promise<Response> {
         const { Name, email, password, role, contact, address } = parsed.data;
 
         // Public/anonymous self-registration may only create RETAILER accounts.
-        // Any other role requires an authenticated ADMIN (see the Phase 2 invite flow).
+        // Any other role requires an authenticated ADMIN (see the Phase 2 invite
+        // flow) — EXCEPT the very first user ever, who is allowed to become the
+        // bootstrap ADMIN since no admin can exist yet to invite them.
         if (role !== "RETAILER") {
             let requester;
             try {
@@ -27,7 +29,8 @@ export async function POST(request: Request): Promise<Response> {
             } catch {
                 requester = null;
             }
-            if (!requester || requester.role !== "ADMIN") {
+            const isBootstrapAdmin = role === "ADMIN" && (await db.user.count()) === 0;
+            if (!isBootstrapAdmin && (!requester || requester.role !== "ADMIN")) {
                 return NextResponse.json(
                     { error: "Only an administrator can create this type of account" },
                     { status: 403 }

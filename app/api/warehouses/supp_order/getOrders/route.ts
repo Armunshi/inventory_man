@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import db from "@/prisma/prisma";
 import { ensureSupplierWorkflow } from "@/lib/orderflow";
+import { getSessionUser, handleApiError } from "@/lib/session";
 
 export async function GET(req: Request) {
   try {
+    await getSessionUser();
     const { searchParams } = new URL(req.url);
     const warehouseId = parseInt(searchParams.get("warehouseId") || "0");
 
@@ -52,8 +54,7 @@ export async function GET(req: Request) {
     }));
 
     return NextResponse.json({ data });
-  } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: "Server Error" }, { status: 500 });
+  } catch (error) {
+    return handleApiError(error);
   }
 }

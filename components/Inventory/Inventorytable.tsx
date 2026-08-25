@@ -23,6 +23,7 @@ import { useSession } from 'next-auth/react';
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowUpDown, ChevronLeft, ChevronRight, Trash2 } from "lucide-react"
+import { deleteInventoryItems } from "@/services/inventoryService"
 
 type ProductWithInventory = Product & {
     min_stock: number;
@@ -30,7 +31,7 @@ type ProductWithInventory = Product & {
     expiry: Date | null;
 };
 
-const Inventorytable = ({ products, page }: { products: ProductWithInventory[], page: number }) => {
+const Inventorytable = ({ products, page, warehouseId }: { products: ProductWithInventory[], page: number, warehouseId: string }) => {
     const { data: session } = useSession();
     const userRole = session?.user?.role;
     console.log(products)
@@ -242,23 +243,11 @@ const Inventorytable = ({ products, page }: { products: ProductWithInventory[], 
         }
 
         try {
-            // TODO: Replace with your actual delete API endpoint
-            const response = await fetch('/api/inventory/delete', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ ids: selectedIds }),
-            })
-
-            if (response.ok) {
-                // Remove deleted items from local state
-                setData(prevData => prevData.filter(item => !selectedIds.includes(item.id)))
-                setRowSelection({})
-                alert('Items deleted successfully')
-            } else {
-                alert('Failed to delete items')
-            }
+            await deleteInventoryItems(warehouseId, selectedIds)
+            // Remove deleted items from local state
+            setData(prevData => prevData.filter(item => !selectedIds.includes(item.id)))
+            setRowSelection({})
+            alert('Items deleted successfully')
         } catch (error) {
             console.error('Error deleting items:', error)
             alert('An error occurred while deleting items')

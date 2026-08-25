@@ -1,62 +1,52 @@
 import db from "@/prisma/prisma"
 import { NextRequest, NextResponse } from "next/server"
+import { getSessionUser, handleApiError } from "@/lib/session"
 
 export async function GET(req:NextRequest): Promise<NextResponse> {
-    const searchParams = req.nextUrl.searchParams;
-    console.log(searchParams)
-    const id = searchParams.get('id')
-    const role = searchParams.get('role');
-    let warehouses;
     try {
-        if (role=='ADMIN'){
-            warehouses = await db.warehouse.findMany({
-                select:{
-                    id:true,
-                    name:true,
-                    capacity:true,
-                    location:true,
-                    managerId:true,
-                    manager:{
-                        select:{
-                            name:true,
-                        }
-                    },
-                    inventory:{
-                        select:{
-                            quantity:true,
-                            min_stock:true,
-                        }
-                    }
+        const user = await getSessionUser();
+
+        const baseSelect = {
+            id: true,
+            name: true,
+            capacity: true,
+            location: true,
+            managerId: true,
+            manager: {
+                select: {
+                    name: true,
                 }
-            }); 
-        }
-        if (role=='WAREHOUSE_MANAGER'){
-            warehouses = await db.warehouse.findMany({
-                select:{
-                    id:true,
-                    name:true,
-                    capacity:true,
-                    location:true,
-                    managerId:true,
-                    manager:{
-                        select:{
-                            name:true,
-                        }
-                    },
-                    inventory:{
-                        select:{
-                            quantity:true,
-                            min_stock:true,
-                        }
-                    }
-                },
-                where:{
-                    managerId:parseInt(id!)
+            },
+            inventory: {
+                select: {
+                    quantity: true,
+                    min_stock: true,
                 }
-            })
+            }
+        } as const;
+
+        let warehouses;
+        if (user.role === 'ADMIN') {
+            warehouses = await db.warehouse.findMany({
+                select: baseSelect,
+                where: user.businessId != null ? { businessId: user.businessId } : undefined,
+            });
+        } else if (user.role === 'WAREHOUSE_MANAGER') {
+            warehouses = await db.warehouse.findMany({
+                select: baseSelect,
+                where: { managerId: user.id },
+            });
+        } else {
+            // SUPPLIER / RETAILER: business-scoped read access so they can
+            // see which warehouses fulfill their orders.
+            warehouses = await db.warehouse.findMany({
+                select: baseSelect,
+                where: user.businessId != null ? { businessId: user.businessId } : undefined,
+            });
         }
+
         //Calculate Stats for each ware house
-        const filtered_warehouses = warehouses?.map((warehouse)=>
+        const filtered_warehouses = warehouses.map((warehouse)=>
             {const inventory = warehouse.inventory;
             const totalProducts = inventory.length;
     
@@ -93,10 +83,6 @@ export async function GET(req:NextRequest): Promise<NextResponse> {
         return NextResponse.json(filtered_warehouses,{status:200})
     
     } catch (error) {
-        console.log("An Error occured while fetching warehouses",error);
-        return NextResponse.json(
-            {message:`An Error occured while fetching warehouses\n${error}`},
-            {status:500},
-        )
+        return handleApiError(error);
     }
 }

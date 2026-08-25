@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react';
 import { WarehouseClient } from '@/types';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useManager } from '@/hooks/useManager';
+import { addWarehouse } from '@/services/warehouseService';
 
 const AddWarehouse = (
     {warehouses,loading,setWarehouses}:
@@ -31,15 +32,8 @@ const AddWarehouse = (
     } = useManager(setValue);
     const onSubmit: SubmitHandler<WarehouseClient> = async (data) => {
         try {
-            const response = await fetch(`/api/warehouses/add`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            })
-            if (response.ok) {
-                const newWarehouse = await response.json();
-                setWarehouses(prev => [...prev, newWarehouse])
-            }
+            const newWarehouse = await addWarehouse(data);
+            setWarehouses(prev => [...prev, newWarehouse])
         } catch (error) {
             console.log("Error While adding Warehouse", error)
         }

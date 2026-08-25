@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import LayoutWithSidebar from "@/app/layotuwithsidebar";
 import AddProducts from "@/components/addProducts";
 import { useSession } from "next-auth/react";
-import { getWarehouseProducts } from "@/warehouseService";
+import { getWarehouseProducts } from "@/services/warehouseService";
 
 
 type ProductWithInventory = Product & {
@@ -23,27 +23,14 @@ export default function WarehouseInventoryPage() {
   const {data:session,status} = useSession();
  
   useEffect(()=>{
-        console.log("Session:", session); // Add this to debug
-      console.log("User ID:", session?.user?.id); // Add this to debug
-
       if (!session?.user?.id || !session.user.role) {
-        console.log("No user ID  or role, returning early"); // Add this
         return;
       }
 
-      console.log("Fetching Products..."); // Add this
-
-      const getProducts =async ()=>{
-       const params = new URLSearchParams();
-        params.append('id', session.user.id.toString());
-        params.append('role', session.user.role!);
-
-        const url = `/api/warehouses/${id}/inventory/getproducts?${params.toString()}`; 
+      const getProducts = async () => {
         try {
-              const data = await getWarehouseProducts(id as string,session.user.id,session.user.role || "ADMIN");//resolve later
-               
-              setProducts(data);
-
+          const data = await getWarehouseProducts(id as string);
+          setProducts(data);
         } catch (err) {
             console.log("Error While fetching Products",err)
         }finally{
@@ -52,7 +39,7 @@ export default function WarehouseInventoryPage() {
       }
       getProducts()
     }
-  ,[session?.user?.id, session?.user?.role])
+  ,[session?.user?.id, session?.user?.role, id])
   return (
     <LayoutWithSidebar>
       <main className="flex-1 p-4 overflow-auto">
@@ -62,7 +49,7 @@ export default function WarehouseInventoryPage() {
         </div>
         {/*Inventory table is here*/}
 
-        <InventoryTable products={products} page={page}/> 
+        <InventoryTable products={products} page={page} warehouseId={id as string}/>
       </main>
     </LayoutWithSidebar>
   );

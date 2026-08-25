@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import db from "@/prisma/prisma";
+import { getSessionUser, handleApiError } from "@/lib/session";
 
 export async function GET(_: Request) {
   try {
+    await getSessionUser();
     const { searchParams } = new URL(_.url);
     const warehouseId = parseInt(searchParams.get("warehouseId") || "0");
 
@@ -21,7 +23,6 @@ export async function GET(_: Request) {
 
     return NextResponse.json({ orders: retailerOrders });
   } catch (error) {
-    console.error("Error fetching Retailer Orders:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

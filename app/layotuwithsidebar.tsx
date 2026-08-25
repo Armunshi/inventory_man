@@ -52,7 +52,6 @@ export default function LayoutWithSidebar({ children }: LayoutWithSidebarProps) 
     { href: "/products", icon: Package, label: "Products" },
     { href: "/inventory", icon: Store, label: "Inventory" },
     { href: "/orders", icon: ShoppingCart, label: "Orders" },
-    { href: "/reports", icon: BarChart3, label: "Reports" },
   ];
 
   return (

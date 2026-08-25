@@ -3,6 +3,7 @@ import { WarehouseClient } from '@/types'
 import { User } from '@prisma/client'
 import React, { useEffect, useRef, useState } from 'react'
 import { UseFormSetValue } from 'react-hook-form'
+import { searchManagers } from '@/services/userService'
 
 export function useManager(setValue:UseFormSetValue<WarehouseClient>){
     const [managerSearch,setManagerSearch] = useState('')
@@ -12,8 +13,7 @@ export function useManager(setValue:UseFormSetValue<WarehouseClient>){
 
     useEffect(()=>{
         if (managerSearch.length>0){
-            fetch(`api/users/managers?search=${encodeURIComponent(managerSearch)}`)
-                .then(res=>res.json())
+            searchManagers(managerSearch)
                 .then(data=>{
                     setManagerSuggestions(data);
                     setShowSuggestions(true);

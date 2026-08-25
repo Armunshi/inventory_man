@@ -1,8 +1,10 @@
 import db from "@/prisma/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionUser, handleApiError } from "@/lib/session";
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
+    await getSessionUser();
     const searchParams = req.nextUrl.searchParams;
     const supplierId = searchParams.get("supplierId");
     const category = searchParams.get("category");
@@ -69,7 +71,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ products: data });
   } catch (error) {
-    console.error("Error fetching products:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

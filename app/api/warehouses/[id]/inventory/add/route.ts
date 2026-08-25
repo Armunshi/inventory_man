@@ -1,19 +1,30 @@
 import db from "@/prisma/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionUser, handleApiError, requireRole } from "@/lib/session";
+import { addInventorySchema } from "@/lib/validations";
 
 
 export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
     try {
+        const user = await getSessionUser();
+        requireRole(user, ["ADMIN", "WAREHOUSE_MANAGER"]);
+
         const { id: warehouseidParam } = await params;
 
-
-
         if (!warehouseidParam) {
-            throw new Error("Warehouse ID not provided");
+            return NextResponse.json({ error: "Warehouse ID not provided" }, { status: 400 });
         }
 
+        const body = await req.json();
+        const parsed = addInventorySchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json(
+                { error: parsed.error.issues[0]?.message ?? "Invalid product data" },
+                { status: 400 }
+            );
+        }
         const {
             name,
             category,
@@ -26,28 +37,11 @@ export async function POST(
             min_stock,
             expiry,
             quantity
-        } = await req.json()
-        if (!name || !supplierId) {
-            return NextResponse.json(
-                { error: "Missing required fields (name or supplierId)" },
-                { status: 400 }
-            );
-        }
+        } = parsed.data;
+
         const warehouseId = Array.isArray(warehouseidParam)
             ? parseInt(warehouseidParam[0], 10)
             : parseInt(warehouseidParam, 10);
-        const searchParams = req.nextUrl.searchParams;
-        console.log(searchParams)
-        const userid = searchParams.get('id')
-        const role = searchParams.get('role');
-
-        if (!name || !supplierId) {
-            return NextResponse.json(
-                { error: "Missing required fields (name or supplierId)" },
-                { status: 400 }
-            );
-        }
-
 
         const product = await db.product.create({
             data: {
@@ -80,10 +74,6 @@ export async function POST(
             { status: 201 }
         );
     } catch (error) {
-        console.error("Error creating product/inventory:", error);
-        return NextResponse.json(
-            { error: error instanceof Error ? error.message : "Internal Server Error" },
-            { status: 500 }
-        );
+        return handleApiError(error);
     }
-} 
+}

@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import db from "@/prisma/prisma";
+import { getSessionUser, handleApiError, requireRole } from "@/lib/session";
 
 export async function POST(req: Request) {
   try {
+    const user = await getSessionUser();
+    requireRole(user, ["ADMIN", "WAREHOUSE_MANAGER"]);
+
     const requestUrl = new URL(req.url);
     const body = await req.json();
     const { orderId } = body;
@@ -82,7 +86,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, updatedOrder });
   } catch (error) {
-    console.error("Error receiving supply:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

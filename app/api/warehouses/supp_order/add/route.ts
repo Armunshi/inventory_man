@@ -5,37 +5,32 @@ import {
   getSupplierWorkflow,
   type CustomFieldInput,
 } from "@/lib/orderflow";
-
-type SupplierOrderItemInput = {
-  productId: number;
-  quantity: number;
-  unit_price: number;
-  batch_size?: number | null;
-};
+import { getSessionUser, handleApiError, requireRole } from "@/lib/session";
+import { createSuppOrderSchema } from "@/lib/validations";
 
 export async function POST(req: Request) {
   try {
+    const user = await getSessionUser();
+    requireRole(user, ["ADMIN", "WAREHOUSE_MANAGER"]);
+
     const requestUrl = new URL(req.url);
     const body = await req.json();
-
-    const { supplierId, order_date, items, workflowTemplateId, customFields } = body as {
-      warehouseId?: number;
-      supplierId?: number;
-      order_date?: string;
-      items?: SupplierOrderItemInput[];
-      workflowTemplateId?: number;
-      customFields?: CustomFieldInput;
-    }; 
-    const warehouseId = Number(body.warehouseId ?? requestUrl.searchParams.get("warehouseId"));
-    // items = [{ productId, quantity, unit_price, batch_size }]
-
-    if (!warehouseId || !supplierId || !items?.length) {
-      return NextResponse.json({ error: "Missing warehouseId, supplierId, or items" }, { status: 400 });
+    if (body.warehouseId == null) {
+      body.warehouseId = requestUrl.searchParams.get("warehouseId");
     }
+
+    const parsed = createSuppOrderSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? "Invalid supplier order data" },
+        { status: 400 }
+      );
+    }
+    const { warehouseId, supplierId, order_date, items, workflowTemplateId, customFields } = parsed.data;
 
     // calculate total
     const totalAmount = items.reduce((sum: number, item) => {
-      return sum + Number(item.unit_price) * item.quantity;
+      return sum + item.unit_price * item.quantity;
     }, 0);
 
     const [warehouse, supplier] = await Promise.all([
@@ -76,7 +71,7 @@ export async function POST(req: Request) {
           })),
         },
         customFieldValues: {
-          create: buildCustomFieldCreates(customFields, workflow.fieldDefinitions),
+          create: buildCustomFieldCreates(customFields as CustomFieldInput | undefined, workflow.fieldDefinitions),
         },
       },
       include: {
@@ -92,7 +87,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, order: newSuppOrder });
   } catch (error) {
-    console.error("Error creating SuppOrder:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

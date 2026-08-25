@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import db from "@/prisma/prisma";
 import { ensureDefaultBusiness, ensureSupplierWorkflow } from "@/lib/orderflow";
 import type { WorkflowOrderType } from "@prisma/client";
+import { getSessionUser, handleApiError } from "@/lib/session";
 
 export async function GET(req: Request) {
   try {
+    await getSessionUser();
     const { searchParams } = new URL(req.url);
     const requestedBusinessId = searchParams.get("businessId");
     const orderType = (searchParams.get("type") || "SUPPLIER_ORDER") as WorkflowOrderType;
@@ -36,7 +38,6 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ business, workflows });
   } catch (error) {
-    console.error("Error fetching workflows:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

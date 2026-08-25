@@ -1,6 +1,7 @@
 import db from "@/prisma/prisma";
 import { Product } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionUser, handleApiError, requireRole } from "@/lib/session";
 
 type ProductWithInventory = Product & {
   min_stock: number;
@@ -12,34 +13,18 @@ type ProductWithInventory = Product & {
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
     const { id: warehouseidParam } = await params;
     if (!warehouseidParam) {
-        throw new Error("Warehouse ID not provided");
+        return NextResponse.json({ message: "Warehouse ID not provided" }, { status: 400 });
     }
 
     const warehouseid = Array.isArray(warehouseidParam)
         ? parseInt(warehouseidParam[0], 10)
         : parseInt(warehouseidParam, 10);
-    const searchParams = request.nextUrl.searchParams;
-    console.log(searchParams)
-    const userid = searchParams.get('id')
-    const role = searchParams.get('role');
-    const page = Number(searchParams.get('page') || 1);
-    if (!userid || !role || !page) {
-        return NextResponse.json(
-            { message: "There was no role or id data " },
-            { status: 404 }
-        )
-    }
-    if (!warehouseid) {
-        if (role == 'ADMIN' || role == 'WAREHOUSE_MANAGER') {
-            return NextResponse.json(
-                { message: "There was no warehouse if for this role data " },
-                { status: 404 }
-            )
-        }
-    }
-    let products:ProductWithInventory[] = [];
+
+    let products: ProductWithInventory[] = [];
     try {
-        if (role == 'ADMIN') {
+        const user = await getSessionUser();
+
+        if (user.role === 'ADMIN' || user.role === 'WAREHOUSE_MANAGER') {
             const incompleteproducts = await db.inventory.findMany({
                 where: { warehouseId: warehouseid },
                 include: {
@@ -52,23 +37,35 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 quantity,
                 expiry,
             }));
+        } else if (user.role === 'SUPPLIER') {
+            // A supplier only sees this warehouse's stock for products they supply.
+            const incompleteproducts = await db.inventory.findMany({
+                where: { warehouseId: warehouseid, product: { supplierId: user.id } },
+                include: { product: true },
+            });
+            products = incompleteproducts.map(({ min_stock, quantity, expiry, product }) => ({
+                ...product,
+                min_stock,
+                quantity,
+                expiry,
+            }));
+        } else {
+            // RETAILER: catalog-style view only — no internal min_stock exposure.
+            requireRole(user, ["RETAILER"]);
+            const incompleteproducts = await db.inventory.findMany({
+                where: { warehouseId: warehouseid },
+                include: { product: true },
+            });
+            products = incompleteproducts.map(({ quantity, expiry, product }) => ({
+                ...product,
+                min_stock: 0,
+                quantity,
+                expiry,
+            }));
         }
-
-        // if (role == 'SUPPLIER') {
-        //     products = await db.product.findMany(
-        //         {
-        //             where: {
-        //                 supplierId: parseInt(userid)
-        //             }
-        //         }
-        //     )
-        // }
 
         return NextResponse.json(products, { status: 200 })
     } catch (error) {
-        console.error("Error fetching products:", error);
-        return NextResponse.json(
-            { message: "Error fetching products" },
-            { status: 500 });
+        return handleApiError(error);
     }
 }

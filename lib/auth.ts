@@ -8,16 +8,19 @@ import db from "../prisma/prisma";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { DefaultSession } from "next-auth";
 import type { AdapterUser } from "@auth/core/adapters";
+import { SignInSchema } from "@/lib/validations";
 
 declare module "next-auth" {
   interface User {
     role?: string;
+    businessId?: number | null;
   }
-  
+
   interface Session {
     user: {
       id: string;
       role?: string;
+      businessId?: number | null;
     } & DefaultSession["user"];
   }
 }
@@ -26,6 +29,7 @@ declare module "@auth/core/jwt" {
   interface JWT {
     id?: string;
     role?: string;
+    businessId?: number | null;
   }
 }
 
@@ -71,24 +75,26 @@ export  const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // Narrow types safely
-        if (!credentials?.email || typeof credentials.email !== "string") return null;
-        if (!credentials?.password || typeof credentials.password !== "string") return null;
+        const parsed = SignInSchema.safeParse(credentials);
+        if (!parsed.success) return null;
+        const { email, password } = parsed.data;
 
         const user = await db.user.findUnique({
-          where: { email: credentials.email },
+          where: { email },
         });
 
         if (!user) return null;
 
-        const isPasswordValid = await compare(credentials.password, (user.password)!);
+        if (!user.password) return null;
+        const isPasswordValid = await compare(password, user.password);
         if (!isPasswordValid) return null;
 
         return {
           id: user.id.toString(),
           email: user.email,
           name: user.name,
-          role:user.role
+          role: user.role,
+          businessId: user.businessId,
         } as User;
       },
     }),
@@ -104,6 +110,7 @@ export  const { handlers, signIn, signOut, auth } = NextAuth({
       token.email = user.email;
       token.name = user.name;
       token.role = user.role;
+      token.businessId = user.businessId ?? null;
     }
     return token;
   },
@@ -113,6 +120,7 @@ export  const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.email = token.email as string;
       session.user.name = token.name as string;
       session.user.role= token.role as string;
+      session.user.businessId = token.businessId ?? null;
     }
     return session;
   }},

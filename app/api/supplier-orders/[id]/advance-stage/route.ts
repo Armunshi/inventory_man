@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import db from "@/prisma/prisma";
+import { getSessionUser, handleApiError, requireRole } from "@/lib/session";
 
 export async function POST(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const user = await getSessionUser();
+    requireRole(user, ["ADMIN", "WAREHOUSE_MANAGER", "SUPPLIER"]);
+
     const { id } = await params;
     const orderId = Number(id);
 
@@ -22,6 +26,14 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    // A supplier may only advance their own orders. Per-stage-name role
+    // rules (e.g. "only warehouse staff can mark Payment Made") aren't
+    // enforced here since stage names are business-defined — that's a
+    // workflow-editor concern, not something to hardcode.
+    if (user.role === "SUPPLIER" && order.supplierId !== user.id) {
+      return NextResponse.json({ error: "This order does not belong to you" }, { status: 403 });
     }
 
     const progress = [...order.stageProgress].sort(
@@ -96,7 +108,6 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
 
     return NextResponse.json({ success: true, order: updatedOrder });
   } catch (error) {
-    console.error("Error advancing supplier order stage:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

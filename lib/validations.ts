@@ -52,3 +52,23 @@ export const createSuppOrderSchema = z.object({
   workflowTemplateId: z.coerce.number().int().positive().optional(),
   customFields: z.unknown().optional(),
 });
+
+export const inviteUserSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email(),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  role: z.enum(["SUPPLIER", "RETAILER", "WAREHOUSE_MANAGER"]),
+  contact: z.union([z.string(), z.number()]).optional().nullable(),
+  address: z.string().optional().nullable(),
+});
+
+export const retailerOrderItemSchema = z.object({
+  productId: z.coerce.number().int().positive(),
+  quantity: z.coerce.number().int().positive(),
+  unit_price: z.coerce.number().nonnegative(),
+});
+
+export const createRetailerOrderSchema = z.object({
+  warehouseId: z.coerce.number().int().positive(),
+  items: z.array(retailerOrderItemSchema).min(1, "At least one item is required"),
+});

@@ -4,12 +4,18 @@ import { getSessionUser, handleApiError } from "@/lib/session";
 
 export async function GET(_: Request) {
   try {
-    await getSessionUser();
+    const user = await getSessionUser();
     const { searchParams } = new URL(_.url);
     const warehouseId = parseInt(searchParams.get("warehouseId") || "0");
 
+    // A retailer only ever sees their own orders, regardless of warehouseId.
+    const where =
+      user.role === "RETAILER"
+        ? { retailerId: user.id, ...(warehouseId ? { warehouseId } : {}) }
+        : { warehouseId };
+
     const retailerOrders = await db.order.findMany({
-      where: { warehouseId },
+      where,
       include: {
         retailer: { select: { id: true, name: true, email: true } },
         items: {

@@ -5,22 +5,30 @@ import { getSessionUser, handleApiError } from "@/lib/session";
 
 export async function GET(req: Request) {
   try {
-    await getSessionUser();
+    const user = await getSessionUser();
     const { searchParams } = new URL(req.url);
     const warehouseId = parseInt(searchParams.get("warehouseId") || "0");
 
-    if (!warehouseId) {
+    if (!warehouseId && user.role !== "SUPPLIER") {
       return NextResponse.json({ error: "Missing warehouseId" }, { status: 400 });
     }
 
-    const warehouse = await db.warehouse.findUnique({
-      where: { id: warehouseId },
-      select: { businessId: true },
-    });
-    await ensureSupplierWorkflow(warehouse?.businessId);
+    if (warehouseId) {
+      const warehouse = await db.warehouse.findUnique({
+        where: { id: warehouseId },
+        select: { businessId: true },
+      });
+      await ensureSupplierWorkflow(warehouse?.businessId);
+    }
+
+    // A supplier only ever sees their own orders, regardless of warehouseId.
+    const where =
+      user.role === "SUPPLIER"
+        ? { supplierId: user.id, ...(warehouseId ? { warehouseId } : {}) }
+        : { warehouseId };
 
     const suppOrders = await db.suppOrder.findMany({
-      where: { warehouseId },
+      where,
       include: {
         supplier: { select: { id: true, name: true, email: true } },
         workflowTemplate: {

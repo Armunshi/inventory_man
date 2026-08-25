@@ -47,12 +47,25 @@ export default function LayoutWithSidebar({ children }: LayoutWithSidebarProps) 
     </div>
   );
 
-  const navItems = [
-    { href: "/", icon: BarChart3, label: "Dashboard" },
-    { href: "/products", icon: Package, label: "Products" },
-    { href: "/inventory", icon: Store, label: "Inventory" },
-    { href: "/orders", icon: ShoppingCart, label: "Orders" },
-  ];
+  const role = session.user?.role;
+
+  // Suppliers/retailers get the portal nav (their own orders only); staff
+  // (ADMIN/WAREHOUSE_MANAGER) get the full internal nav.
+  const navItems =
+    role === "SUPPLIER"
+      ? [{ href: "/portal/supplier/orders", icon: ShoppingCart, label: "My Orders" }]
+      : role === "RETAILER"
+        ? [
+            { href: "/products", icon: Package, label: "Catalog" },
+            { href: "/portal/retailer/orders", icon: ShoppingCart, label: "My Orders" },
+          ]
+        : [
+            { href: "/", icon: BarChart3, label: "Dashboard" },
+            { href: "/products", icon: Package, label: "Products" },
+            { href: "/inventory", icon: Store, label: "Inventory" },
+            { href: "/orders", icon: ShoppingCart, label: "Orders" },
+            ...(role === "ADMIN" ? [{ href: "/admin/users", icon: Users, label: "Accounts" }] : []),
+          ];
 
   return (
     <div className="flex min-h-screen bg-gray-50">

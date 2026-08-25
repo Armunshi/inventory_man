@@ -13,9 +13,13 @@ import React, { useMemo, useState } from "react";
 import { SupplierOrder, RetailerOrder, OrderProduct } from "@/types";
 
 // ---------- PROPS ----------
+// `role` = which kind of order list this is (staff can view either).
+// `viewerRole` = who is actually looking at it — when it's the counterparty
+// themselves (SUPPLIER/RETAILER viewing their own orders via the portal),
+// the vendor/customer column is redundant and gets hidden.
 type OrdersTableProps =
-  | { role: "SUPPLIER"; orders: SupplierOrder[] }
-  | { role: "RETAILER"; orders: RetailerOrder[] };
+  | { role: "SUPPLIER"; orders: SupplierOrder[]; viewerRole?: "ADMIN" | "WAREHOUSE_MANAGER" | "SUPPLIER" }
+  | { role: "RETAILER"; orders: RetailerOrder[]; viewerRole?: "ADMIN" | "WAREHOUSE_MANAGER" | "RETAILER" };
 
 type SortConfig = {
   key: string | null;
@@ -65,7 +69,8 @@ function mapOrdersToUI(
 
 
 const OrdersTable = (props: OrdersTableProps) => {
-  const { role, orders: initialOrders } = props;
+  const { role, orders: initialOrders, viewerRole } = props;
+  const isCounterpartyView = viewerRole === "SUPPLIER" || viewerRole === "RETAILER";
 
   // TS correctly infers array type
   const [orders, setOrders] = useState<OrderWithProducts[]>(() =>
@@ -252,7 +257,7 @@ const OrdersTable = (props: OrdersTableProps) => {
                   Order ID
                 </th>
                 <th>Date</th>
-                <th>Customer</th>
+                {!isCounterpartyView && <th>{role === "SUPPLIER" ? "Supplier" : "Customer"}</th>}
 
                 {role === "RETAILER" && <th>Sales Channel</th>}
 
@@ -280,9 +285,7 @@ const OrdersTable = (props: OrdersTableProps) => {
 
                     <td>{new Date(order.order_date).toLocaleDateString()}</td>
 
-                    <td>{getCustomerName(order)}</td>
-
-
+                    {!isCounterpartyView && <td>{getCustomerName(order)}</td>}
 
                     <td>{order.products.length}</td>
 

@@ -98,7 +98,7 @@ const PlaceRetailerOrder = ({ warehouses, onCreated }: PlaceRetailerOrderProps) 
             <DialogContent className="max-h-[85vh] overflow-y-auto">
                 <DialogTitle>Place Order</DialogTitle>
 
-                <div className="space-y-4">
+                <div className="space-y-4 min-w-0">
                     <div>
                         <label className="block text-sm font-medium mb-1">Warehouse</label>
                         <select
@@ -121,7 +121,7 @@ const PlaceRetailerOrder = ({ warehouses, onCreated }: PlaceRetailerOrderProps) 
                             )}
                             {products.map((product) => (
                                 <div key={product.id} className="flex items-center justify-between gap-3">
-                                    <span className="text-sm truncate">{product.name}</span>
+                                    <span className="text-sm truncate min-w-0">{product.name}</span>
                                     <input
                                         type="number"
                                         min={0}

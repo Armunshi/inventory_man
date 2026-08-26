@@ -55,14 +55,17 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
     try {
-        const admin = await getSessionUser();
-        requireRole(admin, ["ADMIN"]);
+        const user = await getSessionUser();
+        // Read access is broader than the ADMIN-only POST above: warehouse
+        // staff need to look up real supplier accounts to place supplier
+        // orders against (see components/placeSuppOrder.tsx).
+        requireRole(user, ["ADMIN", "WAREHOUSE_MANAGER"]);
 
         const role = req.nextUrl.searchParams.get("role");
 
         const users = await db.user.findMany({
             where: {
-                businessId: admin.businessId,
+                businessId: user.businessId,
                 role: role ? (role as "SUPPLIER" | "RETAILER" | "WAREHOUSE_MANAGER") : { in: ["SUPPLIER", "RETAILER", "WAREHOUSE_MANAGER"] },
             },
             select: { id: true, name: true, email: true, role: true, contact: true, address: true, createdAt: true },

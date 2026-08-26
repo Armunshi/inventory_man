@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from './ui/dialog';
 import apiClient from '@/lib/apiClient';
 import type { ProductCatalogItem, SupplierOrder } from '@/types';
 import type { WarehouseClient } from '@/types';
+import { getBusinessUsers } from '@/services/userService';
 
 type CartLine = {
     productId: number;
@@ -23,6 +24,7 @@ type PlaceSuppOrderProps = {
 const PlaceSuppOrder = ({ warehouses, onCreated }: PlaceSuppOrderProps) => {
     const [open, setOpen] = useState(false);
     const [products, setProducts] = useState<ProductCatalogItem[]>([]);
+    const [suppliers, setSuppliers] = useState<{ id: number; name: string }[]>([]);
     const [warehouseId, setWarehouseId] = useState<string>('');
     const [supplierId, setSupplierId] = useState<string>('');
     const [cart, setCart] = useState<Record<number, CartLine>>({});
@@ -34,13 +36,13 @@ const PlaceSuppOrder = ({ warehouses, onCreated }: PlaceSuppOrderProps) => {
         apiClient.get('/products').then(res => setProducts(res.data.products ?? [])).catch(err => {
             console.error('Error fetching products', err);
         });
+        // Real invited SUPPLIER accounts, not just suppliers derived from
+        // existing products — a freshly invited supplier with no products
+        // yet should still be selectable here.
+        getBusinessUsers('SUPPLIER').then((users: { id: number; name: string }[]) => setSuppliers(users)).catch(err => {
+            console.error('Error fetching suppliers', err);
+        });
     }, [open]);
-
-    const suppliers = useMemo(() => {
-        const map = new Map<number, string>();
-        products.forEach(p => map.set(p.supplier.id, p.supplier.name));
-        return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
-    }, [products]);
 
     const supplierProducts = useMemo(
         () => products.filter(p => String(p.supplier.id) === supplierId),
@@ -116,7 +118,7 @@ const PlaceSuppOrder = ({ warehouses, onCreated }: PlaceSuppOrderProps) => {
                 <DialogContent className="max-h-[85vh] overflow-y-auto">
                     <DialogTitle>New Supplier Order</DialogTitle>
 
-                    <div className="space-y-4">
+                    <div className="space-y-4 min-w-0">
                         <div>
                             <label className="block text-sm font-medium mb-1">Warehouse</label>
                             <select
@@ -154,7 +156,7 @@ const PlaceSuppOrder = ({ warehouses, onCreated }: PlaceSuppOrderProps) => {
                                     )}
                                     {supplierProducts.map((product) => (
                                         <div key={product.id} className="flex items-center justify-between gap-3">
-                                            <span className="text-sm truncate">{product.name}</span>
+                                            <span className="text-sm truncate min-w-0">{product.name}</span>
                                             <input
                                                 type="number"
                                                 min={0}

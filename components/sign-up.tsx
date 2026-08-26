@@ -57,10 +57,16 @@ export default function SignUp() {
             setIsLoading(false)
         }
     }
+    // Public self-registration only ever succeeds as RETAILER (see
+    // app/api/auth/register/route.ts) — SUPPLIER accounts require an
+    // authenticated admin's invite. ADMIN is intentionally not offered here:
+    // nobody should be able to make themselves an admin through this public
+    // form. (The backend still allows a one-time bootstrap ADMIN when the
+    // database has zero users, but that's an initial-setup path, not
+    // something exposed in this UI.)
     enum Role {
-        ADMIN ='ADMIN',
+        RETAILER='RETAILER',
         SUPPLIER='SUPPLIER',
-        RETAILER='RETAILER' 
     }
 
     return (
@@ -109,6 +115,9 @@ export default function SignUp() {
                     ))
                 }
             </select>
+            <p className="text-xs text-muted-foreground">
+              Only Retailer accounts can self-register. Supplier accounts require an invite from an administrator.
+            </p>
           </div>
 
           <div className="grid gap-2">
